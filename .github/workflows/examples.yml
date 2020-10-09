@@ -1,0 +1,57 @@
+name: examples
+
+on: [push, pull_request]
+
+jobs:
+  build-and-format-examples:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install nasm
+      run: |
+        sudo apt-get install nasm
+
+    - name: Install libvpx
+      run: |
+        sudo apt-get install libvpx-dev
+
+    - name: Install libopus
+      run: |
+        git clone https://github.com/xiph/opus.git
+        cd opus
+        ./autogen.sh
+        ./configure --prefix=$HOME/opus_dir
+        make -j12
+        make install
+
+    - name: Set environment variables
+      run: |
+        echo "PKG_CONFIG_PATH=$HOME/opus_dir/lib/pkgconfig" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$HOME/opus_dir/lib" >> $GITHUB_ENV
+
+    - name: Install stable
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        components: clippy, rustfmt
+
+    - name: Run rustfmt
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+
+    - name: Run clippy
+      uses: actions-rs/clippy-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        args: --all
+
+    - name: Build examples
+      run: |
+        cargo build --workspace

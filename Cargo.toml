@@ -1,0 +1,5 @@
+[workspace]
+members = [
+   "frames-info",
+   "streams-info"
+]
