@@ -15,7 +15,7 @@ path = "src/streams_info.rs"
 av-codec = "^0.2"
 av-data = "^0.3"
 av-format = "^0.3"
-clap = "2.33.1"
+clap = "3.1.17"
 matroska = { version = "0.1.0", git = "https://github.com/rust-av/matroska" }
 av-vorbis = { git = "https://github.com/rust-av/av-vorbis" }
 libopus = { version = "0.1.0", git = "https://github.com/rust-av/opus-rs", features = ["codec-trait"] }
