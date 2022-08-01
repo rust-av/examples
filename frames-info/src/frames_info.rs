@@ -1,46 +1,28 @@
 //! This example prints information on every video and audio frames
 //! contained in a matroska file.
 
-// rust-av crates
-extern crate av_codec as codec;
-extern crate av_data as data;
-extern crate av_format as format;
-
-// Matroska demuxer
-extern crate matroska;
-
-// Audio decoders
-extern crate av_vorbis as vorbis;
-extern crate libopus as opus;
-
-// Video decoders
-extern crate libvpx as vpx;
-
-// CLI crates
-extern crate clap;
-
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
 
-use codec::common::CodecList;
-use codec::decoder::Codecs as DecCodecs;
-use codec::decoder::Context as DecContext;
-use data::frame::{ArcFrame, MediaKind};
-use format::buffer::AccReader;
-use format::demuxer::{Context, Event};
+use clap::Parser;
+
+use av_codec::common::CodecList;
+use av_codec::decoder::Codecs as DecCodecs;
+use av_codec::decoder::Context as DecContext;
+use av_data::frame::{ArcFrame, MediaKind};
+use av_format::buffer::AccReader;
+use av_format::demuxer::{Context, Event};
 
 use matroska::demuxer::MkvDemuxer;
 
-use opus::decoder::OPUS_DESCR;
-use vorbis::decoder::VORBIS_DESCR;
-use vpx::decoder::VP9_DESCR;
-
-use clap::{App, Arg};
+use av_vorbis::decoder::VORBIS_DESCR;
+use libopus::decoder::OPUS_DESCR;
+use libvpx::decoder::VP9_DESCR;
 
 // This function decodes a single frame using the most appropriate decoder
-fn decode_single_frame(
-    demuxer: &mut Context,
+fn decode_single_frame<D: Demuxer, R: Buffered>(
+    demuxer: &mut Context<D, R>,
     decoders: &mut HashMap<isize, DecContext>,
 ) -> Result<Option<ArcFrame>, String> {
     // The demuxer reads which event has occurred
@@ -78,31 +60,30 @@ fn decode_single_frame(
     }
 }
 
-fn main() {
-    // Set up CLI configuration and input parameters
-    let matches = App::new("streams-info")
-        .about("Gets information on audio and video streams")
-        .arg(
-            Arg::with_name("path")
-                .help("Sets the matroska file to analyze")
-                .short("i")
-                .long("input")
-                .takes_value(true)
-                .required(true),
-        )
-        .get_matches();
+#[derive(Parser, Debug)]
+#[clap(
+    name = "streams-info",
+    version,
+    author,
+    about = "Gets information on audio and video streams"
+)]
+struct Opts {
+    /// Sets the matroska file to analyze
+    #[clap(long, short, value_parser)]
+    input: PathBuf,
+}
 
-    // Get the path to the matroska file
-    let path = matches.value_of("path").map(|s| Path::new(s)).unwrap();
+fn main() {
+    let opts = Opts::parse();
 
     // Open the matroska file
-    let reader = File::open(path).unwrap();
+    let reader = File::open(opts.input).unwrap();
 
     // Create a buffer of size 4096MB to contain matroska data
     let ar = AccReader::with_capacity(4 * 1024, reader);
 
     // Set the type of demuxer, in this case, a matroska demuxer
-    let mut demuxer = Context::new(Box::new(MkvDemuxer::new()), Box::new(ar));
+    let mut demuxer = Context::new(MkvDemuxer::new(), ar);
 
     // Read matroska headers
     demuxer
