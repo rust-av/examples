@@ -3,34 +3,16 @@ name: examples
 on: [push, pull_request]
 
 jobs:
-  build-and-format-examples:
+  ubuntu-build-and-format:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Install nasm
+    - name: Install libvpx and libopus
       run: |
-        sudo apt-get install nasm
-
-    - name: Install libvpx
-      run: |
-        sudo apt-get install libvpx-dev
-
-    - name: Install libopus
-      run: |
-        git clone https://github.com/xiph/opus.git
-        cd opus
-        ./autogen.sh
-        ./configure --prefix=$HOME/opus_dir
-        make -j12
-        make install
-
-    - name: Set environment variables
-      run: |
-        echo "PKG_CONFIG_PATH=$HOME/opus_dir/lib/pkgconfig" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=$HOME/opus_dir/lib" >> $GITHUB_ENV
+        sudo apt-get install libvpx-dev libopus-dev
 
     - name: Install stable
       uses: actions-rs/toolchain@v1
@@ -44,14 +26,43 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: fmt
-        args: --all -- --check
+        args: -- --check --verbose
 
-    - name: Run clippy
+    - name: Run cargo clippy
       uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        args: --all
+        args: --all-targets --tests --benches -- -D warnings
 
     - name: Build examples
+      run: |
+        cargo build --workspace
+
+  windows-build-gnu:
+
+    runs-on: windows-latest
+
+    env:
+      MSYSTEM: MINGW64
+      MSYS2_PATH_TYPE: inherit
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Rust windows gnu
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable-x86_64-pc-windows-gnu
+        override: true
+
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        install: mingw-w64-x86_64-pkgconf mingw-w64-x86_64-opus mingw-w64-x86_64-libvpx
+        update: true
+
+    - name: Build examples
+      shell: msys2 {0}
       run: |
         cargo build --workspace
