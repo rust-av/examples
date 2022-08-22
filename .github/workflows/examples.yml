@@ -3,7 +3,8 @@ name: examples
 on: [push, pull_request]
 
 jobs:
-  ubuntu-build-and-format:
+
+  linux-build-and-format:
 
     runs-on: ubuntu-latest
 
@@ -49,14 +50,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install Rust windows gnu
+    - name: Install Rust Windows gnu
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
         toolchain: stable-x86_64-pc-windows-gnu
         override: true
 
-    - uses: msys2/setup-msys2@v2
+    - name: Install msys2 packages
+      uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
         install: mingw-w64-x86_64-pkgconf mingw-w64-x86_64-opus mingw-w64-x86_64-libvpx
