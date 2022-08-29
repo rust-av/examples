@@ -13,7 +13,7 @@ path = "src/frames_info.rs"
 
 [dependencies]
 av-codec = "^0.2"
-av-data = "^0.3"
+av-data = "^0.4"
 av-format = "^0.5"
 clap = { version = "^3.2", features = ["derive"] }
 matroska = { version = "0.1.0", git = "https://github.com/rust-av/matroska" }
