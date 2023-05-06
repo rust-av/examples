@@ -31,7 +31,7 @@ fn main() {
     // Open the matroska file
     let reader = File::open(opts.input).unwrap();
 
-    // Create a buffer of size 4096MB to contain matroska data
+    // Create a buffer of size 4096 bytes to contain matroska data
     let ar = AccReader::with_capacity(4 * 1024, reader);
 
     // Set the type of demuxer, in this case, a matroska demuxer
